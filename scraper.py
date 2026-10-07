@@ -37,11 +37,9 @@ def generate_m3u():
     channels = soup.find_all('div', class_='channel-item')
 
     if not channels:
-      print(
-          'Warning: No channels found. Check HTML structure or if site uses'
-          ' JSON API.'
-      )
-      return False
+      print('Warning: No channels found. Trying generic links extraction...')
+      # যদি নির্দিষ্ট ক্লাস না পাওয়া যায়, পেজ থেকে সরাসরি m3u8 লিংক খোঁজার ফলব্যাক
+      channels = soup.find_all('a')
 
     m3u_content = '#EXTM3U\n'
     valid_count = 0
@@ -49,15 +47,14 @@ def generate_m3u():
 
     for channel in channels:
       name = (
-          channel.find('h3').text.strip()
-          if channel.find('h3')
-          else 'Unknown Channel'
+          channel.text.strip() if channel.text else 'Unknown Channel'
       )
-      logo = channel.find('img')['src'] if channel.find('img') else ''
-      stream_url = channel.find('a')['href'] if channel.find('a') else ''
+      stream_url = channel.get('href', '')
 
-      if logo and not logo.startswith('http'):
-        logo = TARGET_URL.rstrip('/') + '/' + logo.lstrip('/')
+      if not stream_url.startswith('http'):
+        continue
+
+      logo = ''  # যদি লোগো থাকে লজিক এখানে বসবে
 
       print(f'Checking: {name}...')
       if is_channel_alive(stream_url):
@@ -71,17 +68,21 @@ def generate_m3u():
         dead_count += 1
         print(' -> Dead [Skipped]')
 
+    # ফাইল সেভ করা নিশ্চিত করা
     with open(OUTPUT_FILE, 'w', encoding='utf-8') as f:
       f.write(m3u_content)
 
     print(
-        f'M3U playlist generated! Active: {valid_count}, Dead Skipped:'
-        f' {dead_count}'
+        f'M3U playlist generated successfully! Active: {valid_count}, Dead'
+        f' Skipped: {dead_count}'
     )
     return True
 
   except Exception as e:
     print(f'Error during scraping: {e}')
+    # ফেইল করলেও যাতে অন্তত বেসিক ফাইল তৈরি থাকে
+    with open(OUTPUT_FILE, 'w', encoding='utf-8') as f:
+      f.write('#EXTM3U\n')
     return False
 
 
