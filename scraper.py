@@ -11,12 +11,9 @@ def is_channel_alive(stream_url):
   if not stream_url:
     return False
   try:
-    # ছোট একটি হেড রিকোয়েস্ট বা গেট রিকোয়েস্ট পাঠিয়ে চেক করা
-    # টাইমআউট কম রাখা হয়েছে যেন স্ক্রিপ্ট ধীরগতির না হয়ে যায়
     response = requests.get(
         stream_url, timeout=4, stream=True, headers={'User-Agent': 'VLC/3.0.18'}
     )
-    # যদি স্ট্যাটাস কোড ২০০ হয় এবং কন্টেন্ট টাইপে m3u8 বা ভিডিও স্ট্রিম থাকে
     if response.status_code == 200:
       return True
   except:
@@ -40,7 +37,10 @@ def generate_m3u():
     channels = soup.find_all('div', class_='channel-item')
 
     if not channels:
-      print('Warning: No channels found.')
+      print(
+          'Warning: No channels found. Check HTML structure or if site uses'
+          ' JSON API.'
+      )
       return False
 
     m3u_content = '#EXTM3U\n'
@@ -59,7 +59,6 @@ def generate_m3u():
       if logo and not logo.startswith('http'):
         logo = TARGET_URL.rstrip('/') + '/' + logo.lstrip('/')
 
-      # লিংকটি ডেড নাকি লাইভ তা চেক করা হচ্ছে
       print(f'Checking: {name}...')
       if is_channel_alive(stream_url):
         m3u_content += (
@@ -67,12 +66,11 @@ def generate_m3u():
         )
         m3u_content += f'{stream_url}\n'
         valid_count += 1
-        print(f' -> Alive [Added]')
+        print(' -> Alive [Added]')
       else:
         dead_count += 1
-        print(f' -> Dead [Skipped]')
+        print(' -> Dead [Skipped]')
 
-    # ফাইল সেভ করা
     with open(OUTPUT_FILE, 'w', encoding='utf-8') as f:
       f.write(m3u_content)
 
