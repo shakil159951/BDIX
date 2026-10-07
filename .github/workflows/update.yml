@@ -33,13 +33,19 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           
-          # ফাইলটি স্টেজিং এরিয়ায় যুক্ত করে পরিবর্তন যাচাই করা হচ্ছে
-          git add channels.m3u
-          
-          if git diff --staged --quiet; then
-            echo "No changes detected in the playlist. Skipping commit."
+          # ফাইলটি তৈরি হয়েছে কিনা চেক করি এবং গিট এ অ্যাড করি
+          if [ -f "channels.m3u" ]; then
+            git add channels.m3u
+            
+            # যদি ফাইলে কোনো পরিবর্তন না থাকে
+            if git diff --staged --quiet; then
+              echo "No changes detected in the playlist. Skipping commit."
+            else
+              echo "Changes detected! Committing new playlist..."
+              git commit -m "Auto-update M3U playlist [skip ci]"
+              git push
+            fi
           else
-            echo "Changes detected! Committing new playlist..."
-            git commit -m "Auto-update M3U playlist [skip ci]"
-            git push
+            echo "Error: channels.m3u was not generated."
+            exit 1
           fi
