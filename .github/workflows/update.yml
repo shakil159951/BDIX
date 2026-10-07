@@ -1,12 +1,41 @@
-- name: Check for changes and commit
+name: Auto Scrape & Update M3U
+
+on:
+  schedule:
+    - cron: '0 */12 * * *' # প্রতি ১২ ঘণ্টা পর পর রান করবে
+  workflow_dispatch: # ম্যানুয়ালি রান করার অপশন
+
+jobs:
+  update-playlist:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          pip install requests beautifulsoup4
+
+      - name: Run Scraper Script
+        run: |
+          python scraper.py
+
+      - name: Check for changes and commit
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           
-          # Prothome file-ti git add kore nei, jate tracking shuru hoy
+          # ফাইলটি স্টেজিং এরিয়ায় যুক্ত করে পরিবর্তন যাচাই করা হচ্ছে
           git add channels.m3u
           
-          # Dekhi kono change ache kina
           if git diff --staged --quiet; then
             echo "No changes detected in the playlist. Skipping commit."
           else
