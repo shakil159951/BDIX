@@ -2,19 +2,19 @@ name: Auto Scrape & Update M3U
 
 on:
   schedule:
-    - cron: '0 */12 * * *' # প্রতি ১২ ঘণ্টা পর পর অটো রান হবে
-  workflow_dispatch: # ম্যানুয়ালি রান করার অপশন
+    - cron: '0 */12 * * *'
+  workflow_dispatch:
 
 jobs:
   update-playlist:
-    runs-on: self-hosted # আপনার লোকাল রানার ব্যবহার করার জন্য
+    runs-on: self-hosted
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Run Scraper Script
-        run: python scraper.py
+        run: py -3 scraper.py
 
       - name: Commit and Push changes
         run: |
