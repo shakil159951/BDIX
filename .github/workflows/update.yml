@@ -1,0 +1,46 @@
+name: Auto Scrape & Update M3U
+
+on:
+  schedule:
+    - cron: '0 */12 * * *' # প্রতি ১২ ঘণ্টা পর পর রান করবে (প্রতিদিন দুবার)
+  workflow_dispatch: # ম্যানুয়ালি রান করার অপশনও থাকবে
+
+jobs:
+  update-playlist:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # গিটহাবে পুশ করার পার্মিশন নিশ্চিত করার জন্য
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          pip install requests beautifulsoup4
+
+      - name: Run Scraper Script
+        run: |
+          python scraper.py
+
+      - name: Check for changes and commit
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          
+          # স্ট্যাটাস চেক করি কোনো পরিবর্তন হয়েছে কিনা
+          git status
+          
+          if git diff --quiet channels.m3u; then
+            echo "No changes detected in the playlist. Skipping commit."
+          else
+            echo "Changes detected! Committing new playlist..."
+            git add channels.m3u
+            git commit -m "Auto-update M3U playlist [skip ci]"
+            git push
+          fi
